@@ -5,19 +5,16 @@ import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 
 dotenv.config();
-
 const { transformBabelAST } = await import("destam-dom/transform/htmlLiteral.js");
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-const env = process.env.ENV;
+const env = process.env.NODE_ENV;
 
 const config = {
     name: 'mango-sync',
     target: 'web',
     stats: 'minimal',
     devtool: 'source-map',
-    mode: env,
+    mode: env || 'development',
     entry: {
         mango_sync: './frontend/src/index.jsx',
     },
@@ -35,7 +32,7 @@ const config = {
         }),
         new HtmlWebpackPlugin({
             template: './frontend/public/index.html',
-        }),
+        })
     ],
     module: {
         rules: [
@@ -71,29 +68,7 @@ const config = {
                 use: ['style-loader', 'css-loader'],
             },
         ]
-    },
-
-    devServer: {
-        headers: {
-            'Access-Control-Allow-Origin': '*',
-        },
-        static: {
-            directory: path.join(__dirname, 'public'),
-        },
-        hot: true,
-        historyApiFallback: true,
-        client: {
-            overlay: {
-                errors: true,
-                warnings: false,
-            },
-            logging: 'error',
-        },
-        proxy: {
-            // Proxy requests to FastAPI server
-            '/api': process.env.URL || 'http://localhost:3000'
-        },
-    },
+    }
 };
 
 export default config;

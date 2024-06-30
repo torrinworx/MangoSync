@@ -4,15 +4,17 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "start": ""
-  },
+    "dev": "webpack --config webpack.config.js --watch"
+    },
   "devDependencies": {
-    "@tauri-apps/cli": "^1.5.14"
+    "@tauri-apps/cli": "^1.5.14",
+    "write-file-webpack-plugin": "^4.5.1"
   },
   "dependencies": {
     "@babel/preset-react": "^7.24.7",
     "destam": "^0.2.0",
     "destam-dom": "^0.7.3",
-    "destamatic-ui": "file:./destamatic-ui"
+    "destamatic-ui": "file:./destamatic-ui",
+    "webpack-dev-server": "^5.0.4"
   }
 }
