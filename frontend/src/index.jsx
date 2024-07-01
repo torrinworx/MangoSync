@@ -9,6 +9,8 @@ const routes = {
 
 window.Shared = Shared
 
+// Shared.Theme.colours.primary.base = "#FFB703"
+
 let remove;
 window.addEventListener('load', () => {
 	remove = mount(document.body, <Router routes={routes} Shared={Shared}/>);
