@@ -1,21 +1,38 @@
 import os
+import time
 import traceback
 import subprocess
+import logging.config
+from pathlib import Path
 from threading import Thread
-import logging.config as logging
 from urllib.parse import urlparse
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 
-app = FastAPI(redoc_url=False, docs_url=None)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    build_dir = Path("./build")
+    logger = logging.getLogger("uvicorn")
+    
+    while not build_dir.exists():
+        logger.info("Build directory not found. Waiting...")
+        time.sleep(2)
+    
+    app.mount("/", StaticFiles(directory="./build", html=True), name="static")
+    logger.info("Static files mounted successfully.")
+    yield
+
+app = FastAPI(lifespan=lifespan, redoc_url=False, docs_url=None)
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     error_details = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
-    print(f"Validation Error: {error_details}")
+    logger = logging.getLogger("uvicorn")
+    logger.error(f"Validation Error: {error_details}")
 
 app.add_middleware(
     CORSMiddleware,
@@ -25,7 +42,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-logging.dictConfig({
+logging.config.dictConfig({
     "version": 1,
     "formatters": {
         "default": {
@@ -48,8 +65,6 @@ logging.dictConfig({
         }
     },
 })
-
-app.mount("/", StaticFiles(directory="./build", html=True), name="static")
 
 if __name__ == "__main__":
     import uvicorn
@@ -88,6 +103,7 @@ if __name__ == "__main__":
 
         # Capture webpack output
         def stream_output(process):
+            logger = logging.getLogger("uvicorn")
             try:
                 while True:
                     output = process.stdout.readline()
@@ -96,7 +112,7 @@ if __name__ == "__main__":
                     if output:
                         print(output.strip())
             except Exception as e:
-                print(f"Error streaming webpack output: {str(e)}")
+                logger.error(f"Error streaming webpack output: {str(e)}")
 
         # Stream webpack output in a separate thread
         thread = Thread(target=stream_output, args=(webpack_process,))

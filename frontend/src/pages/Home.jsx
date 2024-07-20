@@ -1,13 +1,14 @@
 import { h, Typography, Button, TextArea } from "destamatic-ui";
 
 import { Observer } from "destam-dom";
+import Player from "../components/player";
+
 
 const Home = ({ Shared }) => {
     const disabled = Observer.mutable(false);
 
-    return <div 
+    return <div
         $style={{
-            // backgroundColor: "#FFB703",
             display: 'flex',
             flexDirection: 'column',
             height: '100%',
@@ -21,7 +22,7 @@ const Home = ({ Shared }) => {
     <Button type='text' label="Button" disabled={disabled} onClick={() => disabled.set(true)} />
     <Button type='contained' label="Button" disabled={disabled} onClick={() => disabled.set(true)} />
     <Button type='outlined' label="Button" disabled={disabled} onClick={() => disabled.set(true)} />
-    <TextArea />
+    <Player Shared={Shared} />
     </div>;
 };
 
