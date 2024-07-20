@@ -6,15 +6,15 @@
   "scripts": {
     "start": "python3 ./backend/main.py",
     "dev": "webpack --config webpack.config.js --watch"
-    },
+  },
   "devDependencies": {
-    "@tauri-apps/cli": "^1.5.14",
+    "@tauri-apps/cli": "^1.6.0",
     "write-file-webpack-plugin": "^4.5.1"
   },
   "dependencies": {
     "@babel/preset-react": "^7.24.7",
-    "destam": "^0.2.0",
-    "destam-dom": "^0.7.3",
+    "destam": "^0.3.0",
+    "destam-dom": "^0.8.2",
     "destamatic-ui": "file:./destamatic-ui",
     "webpack-dev-server": "^5.0.4"
   }
