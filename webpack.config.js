@@ -1,6 +1,7 @@
 import path from 'path';
 import webpack from 'webpack';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
+import CopyWebpackPlugin from 'copy-webpack-plugin';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 
@@ -32,6 +33,11 @@ const config = {
         }),
         new HtmlWebpackPlugin({
             template: './frontend/public/index.html',
+        }),
+        new CopyWebpackPlugin({
+            patterns: [
+              { from: 'frontend/public/assets', to: 'assets' }
+            ],
         })
     ],
     module: {

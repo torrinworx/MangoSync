@@ -13,6 +13,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 
+from ws import router
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     build_dir = Path("./build")
@@ -24,6 +26,7 @@ async def lifespan(app: FastAPI):
     
     app.mount("/", StaticFiles(directory="./build", html=True), name="static")
     logger.info("Static files mounted successfully.")
+
     yield
 
 app = FastAPI(lifespan=lifespan, redoc_url=False, docs_url=None)
@@ -42,29 +45,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-logging.config.dictConfig({
-    "version": 1,
-    "formatters": {
-        "default": {
-            "()": "uvicorn.logging.DefaultFormatter",
-            "fmt": "%(levelprefix)s %(message)s",
-            "use_colors": None,
-        }
-    },
-    "handlers": {
-        "default": {
-            "formatter": "default",
-            "class": "logging.StreamHandler",
-            "stream": "ext://sys.stdout",
-        }
-    },
-    "loggers": {
-        "uvicorn": {
-            "handlers": ["default"],
-            "level": "INFO",
-        }
-    },
-})
+app.include_router(router)
 
 if __name__ == "__main__":
     import uvicorn
@@ -103,7 +84,6 @@ if __name__ == "__main__":
 
         # Capture webpack output
         def stream_output(process):
-            logger = logging.getLogger("uvicorn")
             try:
                 while True:
                     output = process.stdout.readline()
@@ -112,7 +92,7 @@ if __name__ == "__main__":
                     if output:
                         print(output.strip())
             except Exception as e:
-                logger.error(f"Error streaming webpack output: {str(e)}")
+                print(f"Error streaming webpack output: {str(e)}")
 
         # Stream webpack output in a separate thread
         thread = Thread(target=stream_output, args=(webpack_process,))
