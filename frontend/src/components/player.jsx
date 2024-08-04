@@ -1,7 +1,7 @@
-import { h, Observer, OObject } from 'destam-dom';
-import { Button, Icon, Slider, Typography } from 'destamatic-ui';
+import { h, Observer } from 'destam-dom';
+import { Button, Icon, Slider, Typography, TextArea } from 'destamatic-ui';
 
-import streamMusicViaWebSocket from './music_stream';
+import fileStream from './fileStream';
 
 // Format time in "MM:SS"
 const formatTime = (milliseconds) => {
@@ -12,57 +12,91 @@ const formatTime = (milliseconds) => {
 };
 
 const Player = ({ ...props }) => {
-    const audio = Observer.mutable(new Audio());
-    const value = Observer.mutable(0);
-    const durationMs = Observer.mutable(60000); // Initial dummy duration
+    const value = Observer.mutable(0.0);
+    const durationMs = Observer.mutable(0);
     const playerStatus = Observer.mutable(false);
     const drag = Observer.mutable(false);
-    
-    // Fetch the audio stream using WebSocket
-    streamMusicViaWebSocket('/home/torrin/repositories/personal/MangoSync/frontend/public/assets/music/American Idiot.flac').then(audioBlob => {
-        const audioUrl = URL.createObjectURL(audioBlob);
-        audio.get().src = audioUrl;
-        
-        audio.get().addEventListener('loadedmetadata', () => {
-            durationMs.set(audio.get().duration * 1000); // Convert seconds to milliseconds
-            console.log(`Duration: ${audio.get().duration} seconds`);
-        });
+    const audio = new Audio();
+    const path = Observer.mutable('/home/torrin/Repositories/Personal/MangoSync/music/Symphony No. 3 in E flat major, Op. 55 - I. Allegro con brio.flac');
 
-        audio.get().load();
-    }).catch(error => {
-        console.error("Failed to stream music via WebSocket:", error);
-    });
+    const handleFile = (path) => {
+        fileStream(
+            path
+        ).then(audioBlob => {
+            const audioUrl = URL.createObjectURL(audioBlob);
+            audio.src = audioUrl;
+            
+            audio.addEventListener('loadedmetadata', () => {
+                durationMs.set(audio.duration * 1000); // Convert seconds to milliseconds
+                console.log(`Duration: ${audio.duration} seconds`);
+            });
+
+            audio.load();
+        }).catch(error => {
+            console.error("Failed to stream music via WebSocket:", error);
+        });
+    }
+    path.watch(d => {
+        handleFile(d.value)
+    })
 
     playerStatus.watch(delta => {
         if (delta.value) {
-            audio.get().play();
+            audio.play();
         } else {
-            audio.get().pause();
+            audio.pause();
         }
     });
 
     // Listen for the timeupdate event to update the current time
-    audio.get().addEventListener('timeupdate', () => {
-        if (!drag.get()) {
-            value.set(audio.get().currentTime * 1000); // Convert seconds to milliseconds
-        }
+    audio.addEventListener('timeupdate', () => {
+        value.set(audio.currentTime * 1000);
     });
 
-    // Adjust the audio currentTime when the slider value changes
-    value.watch(v => {
-        if (drag.get()) {
-            audio.get().currentTime = v / 1000; // Convert milliseconds to seconds
-        }
+    drag.watch(() => {
+        audio.currentTime = value.get() / 1000;
     });
 
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.setActionHandler('play', () => {
+            playerStatus.set(true);
+        });
+
+        navigator.mediaSession.setActionHandler('pause', () => {
+            playerStatus.set(false);
+        });
+
+        navigator.mediaSession.setActionHandler('stop', () => {
+            playerStatus.set(false);
+            audio.currentTime = 0;
+        });
+
+        navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+            audio.currentTime = Math.max(audio.currentTime - (details.seekOffset || 10), 0);
+            value.set(audio.currentTime * 1000);
+        });
+
+        navigator.mediaSession.setActionHandler('seekforward', (details) => {
+            audio.currentTime = Math.min(audio.currentTime + (details.seekOffset || 10), audio.duration);
+            value.set(audio.currentTime * 1000);
+        });
+    }
+
+    handleFile(path.get())
     return <div $style={{ textAlign: 'center' }}>
+        <TextArea OValue={path} placeholder={'music file path'} />
         <div $style={{ width: '300px', margin: '0 auto' }}>
+            <Slider /> 
             <Slider
                 max={durationMs}
                 OValue={value}
-                onDragStart={() => { drag.set(true); }}
-                onDragEnd={() => { drag.set(false); }}
-                onChange={() => { audio.get().currentTime = value.get() / 1000; }}
+                onDrag={() => drag.set(!drag.get())}
+                onDragStart={() => drag.set(true)}
+                onDragEnd={() => drag.set(false)}
+                onChange={(e) => {
+                    console.log(e)
+                    audio.currentTime = value.get() / 1000
+                }}
             />
             <div $style={{ display: 'flex', justifyContent: 'space-between', marginTop: '5px' }}>
                 <Typography type='p2'>

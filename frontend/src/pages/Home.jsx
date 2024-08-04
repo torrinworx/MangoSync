@@ -17,12 +17,11 @@ const Home = ({ Shared }) => {
             inset: '0px',
         }}
     >
-
-    <Typography variant='h1' >Hello World!</Typography>
-    <Button type='text' label="Button" disabled={disabled} onClick={() => disabled.set(true)} />
-    <Button type='contained' label="Button" disabled={disabled} onClick={() => disabled.set(true)} />
-    <Button type='outlined' label="Button" disabled={disabled} onClick={() => disabled.set(true)} />
-    <Player Shared={Shared} />
+        <Typography variant='h1' >Hello World!</Typography>
+        <Button type='text' label="Button" disabled={disabled} onClick={() => disabled.set(true)} />
+        <Button type='contained' label="Button" disabled={disabled} onClick={() => disabled.set(true)} />
+        <Button type='outlined' label="Button" disabled={disabled} onClick={() => disabled.set(true)} />
+        <Player Shared={Shared} />
     </div>;
 };
 

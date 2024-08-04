@@ -7,6 +7,7 @@ from global_vars import tasks
 logger = logging.getLogger("uvicorn")
 router = APIRouter()
 
+
 @router.websocket(path="/websocket")
 async def websocket(ws: WebSocket) -> None:
     """

@@ -15,27 +15,33 @@ from fastapi.exceptions import RequestValidationError
 
 from ws import router
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     build_dir = Path("./build")
     logger = logging.getLogger("uvicorn")
-    
+
     while not build_dir.exists():
         logger.info("Build directory not found. Waiting...")
         time.sleep(2)
-    
+
     app.mount("/", StaticFiles(directory="./build", html=True), name="static")
     logger.info("Static files mounted successfully.")
 
     yield
 
+
 app = FastAPI(lifespan=lifespan, redoc_url=False, docs_url=None)
+
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    error_details = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
+    error_details = "".join(
+        traceback.format_exception(type(exc), exc, exc.__traceback__)
+    )
     logger = logging.getLogger("uvicorn")
     logger.error(f"Validation Error: {error_details}")
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -64,14 +70,11 @@ if __name__ == "__main__":
         "app": "main:app",
         "host": parsed_url.hostname,
         "port": parsed_url.port,
-        "log_level": "debug" if env == "development" else "info"
+        "log_level": "info" if env == "development" else "info",
     }
-    
+
     if env == "development":
-        uvicorn_params.update({
-            "reload": True,
-            "reload_dirs": ["backend"]
-        })
+        uvicorn_params.update({"reload": True, "reload_dirs": ["backend"]})
 
         # Start the webpack client with color support
         webpack_process = subprocess.Popen(
@@ -87,7 +90,7 @@ if __name__ == "__main__":
             try:
                 while True:
                     output = process.stdout.readline()
-                    if output == '' and process.poll() is not None:
+                    if output == "" and process.poll() is not None:
                         break
                     if output:
                         print(output.strip())
