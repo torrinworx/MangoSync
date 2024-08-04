@@ -35,17 +35,18 @@ const Player = ({ ...props }) => {
         }).catch(error => {
             console.error("Failed to stream music via WebSocket:", error);
         });
-    }
+    };
+
     path.watch(d => {
-        handleFile(d.value)
-    })
+        handleFile(d.value);
+    });
 
     playerStatus.watch(delta => {
         if (delta.value) {
             audio.play();
         } else {
             audio.pause();
-        }
+        };
     });
 
     // Listen for the timeupdate event to update the current time
