@@ -12,16 +12,17 @@ const formatTime = (milliseconds) => {
 };
 
 const Player = ({ ...props }) => {
-    const value = Observer.mutable(0.0);
+    const value = Observer.mutable(0);
     const durationMs = Observer.mutable(0);
     const playerStatus = Observer.mutable(false);
     const drag = Observer.mutable(false);
     const audio = new Audio();
-    const path = Observer.mutable('/home/torrin/Repositories/Personal/MangoSync/music/Symphony No. 3 in E flat major, Op. 55 - I. Allegro con brio.flac');
+    const path = Observer.mutable('/home/torrin/Repositories/Personal/MangoSync/music/American Idiot.flac');
+    const lyrics = Observer.mutable('/home/torrin/Repositories/Personal/MangoSync/music/American Idiot.enhanced.lrc')
 
-    const handleFile = (path) => {
+    const handleFile = (song) => {
         fileStream(
-            path
+            song
         ).then(audioBlob => {
             const audioUrl = URL.createObjectURL(audioBlob);
             audio.src = audioUrl;
@@ -35,8 +36,25 @@ const Player = ({ ...props }) => {
         }).catch(error => {
             console.error("Failed to stream music via WebSocket:", error);
         });
-    };
 
+        fileStream(lyrics.get())
+            .then(lyricsBlob => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const lyricsText = reader.result;
+                    console.log("Lyrics from server:", lyricsText);
+                    // You can now handle the lyrics text as needed
+                };
+                reader.onerror = () => {
+                    console.error("Failed to read lyrics file:", reader.error);
+                };
+                reader.readAsText(lyricsBlob);
+            })
+            .catch(error => {
+                console.error("Failed to stream lyrics via WebSocket:", error);
+            });
+    };
+    
     path.watch(d => {
         handleFile(d.value);
     });
@@ -84,6 +102,7 @@ const Player = ({ ...props }) => {
     }
 
     handleFile(path.get())
+
     return <div $style={{ textAlign: 'center' }}>
         <TextArea OValue={path} placeholder={'music file path'} />
         <div $style={{ width: '300px', margin: '0 auto' }}>
