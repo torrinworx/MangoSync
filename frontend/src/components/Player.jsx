@@ -1,5 +1,5 @@
 import { h, Observer } from 'destam-dom';
-import { Button, Icon, Slider, Typography, TextArea } from 'destamatic-ui';
+import { Button, Icon, Slider, Typography } from 'destamatic-ui';
 
 import fileStream from './fileStream';
 
@@ -11,6 +11,10 @@ const formatTime = (milliseconds) => {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 };
 
+const getSong = (song) => {
+    
+}
+
 const Player = ({ ...props }) => {
     const value = Observer.mutable(0);
     const durationMs = Observer.mutable(0);
@@ -18,7 +22,8 @@ const Player = ({ ...props }) => {
     const drag = Observer.mutable(false);
     const audio = new Audio();
     const path = Observer.mutable('/home/torrin/Repositories/Personal/MangoSync/music/American Idiot.flac');
-    const lyrics = Observer.mutable('/home/torrin/Repositories/Personal/MangoSync/music/American Idiot.enhanced.lrc')
+    const lyrics = Observer.mutable('/home/torrin/Repositories/Personal/MangoSync/music/American Idiot.enhanced.lrc');
+    const volume = Observer.mutable(0.5);
 
     const handleFile = (song) => {
         fileStream(
@@ -26,7 +31,7 @@ const Player = ({ ...props }) => {
         ).then(audioBlob => {
             const audioUrl = URL.createObjectURL(audioBlob);
             audio.src = audioUrl;
-            
+
             audio.addEventListener('loadedmetadata', () => {
                 durationMs.set(audio.duration * 1000); // Convert seconds to milliseconds
                 console.log(`Duration: ${audio.duration} seconds`);
@@ -54,7 +59,7 @@ const Player = ({ ...props }) => {
                 console.error("Failed to stream lyrics via WebSocket:", error);
             });
     };
-    
+
     path.watch(d => {
         handleFile(d.value);
     });
@@ -74,6 +79,10 @@ const Player = ({ ...props }) => {
 
     drag.watch(() => {
         audio.currentTime = value.get() / 1000;
+    });
+
+    volume.watch(d => {
+        audio.volume = d.value;
     });
 
     if ('mediaSession' in navigator) {
@@ -99,18 +108,16 @@ const Player = ({ ...props }) => {
             audio.currentTime = Math.min(audio.currentTime + (details.seekOffset || 10), audio.duration);
             value.set(audio.currentTime * 1000);
         });
-    }
+    };
 
-    handleFile(path.get())
+    handleFile(path.get());
 
     return <div $style={{ textAlign: 'center' }}>
-        <TextArea OValue={path} placeholder={'music file path'} />
+        {/* <TextArea OValue={path} placeholder={'music file path'} /> */}
         <div $style={{ width: '300px', margin: '0 auto' }}>
-            <Slider /> 
             <Slider
                 max={durationMs}
                 OValue={value}
-                // onDrag={() => drag.set(!drag.get())}
                 onDragStart={() => {
                     drag.set(true);
 
@@ -126,7 +133,7 @@ const Player = ({ ...props }) => {
                     };
                 }}
                 onChange={(e) => {
-                    audio.currentTime = value.get() / 1000
+                    audio.currentTime = value.get() / 1000;
                 }}
             />
             <div $style={{ display: 'flex', justifyContent: 'space-between', marginTop: '5px' }}>
@@ -162,6 +169,17 @@ const Player = ({ ...props }) => {
                 onClick={() => playerStatus.set(!playerStatus.get())}
             />
             <Button type='icon' Icon={<Icon style={{ fill: 'currentColor' }} libraryName='feather' iconName='fast-forward' size='30' />} />
+        </div>
+        <div $style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                width: '300px',
+                margin: '20px auto'
+        }}>
+            <Icon style={{ fill: 'currentColor' }} libraryName='feather' iconName='volume' size='30' />
+            <Slider OValue={volume} min={0} max={1} step={0.01} />
+            <Icon style={{ fill: 'currentColor' }} libraryName='feather' iconName='volume-2' size='30' />
         </div>
     </div>;
 };
