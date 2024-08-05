@@ -59,8 +59,8 @@ const Player = ({ ...props }) => {
         handleFile(d.value);
     });
 
-    playerStatus.watch(delta => {
-        if (delta.value) {
+    playerStatus.watch(d => {
+        if (d.value) {
             audio.play();
         } else {
             audio.pause();
@@ -110,11 +110,22 @@ const Player = ({ ...props }) => {
             <Slider
                 max={durationMs}
                 OValue={value}
-                onDrag={() => drag.set(!drag.get())}
-                onDragStart={() => drag.set(true)}
-                onDragEnd={() => drag.set(false)}
+                // onDrag={() => drag.set(!drag.get())}
+                onDragStart={() => {
+                    drag.set(true);
+
+                    if (playerStatus) {
+                        audio.pause();
+                    };
+                }}
+                onDragEnd={() => {
+                    drag.set(false);
+
+                    if (playerStatus) {
+                        audio.play();
+                    };
+                }}
                 onChange={(e) => {
-                    console.log(e)
                     audio.currentTime = value.get() / 1000
                 }}
             />

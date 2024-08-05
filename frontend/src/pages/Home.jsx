@@ -1,7 +1,7 @@
 import { h, Typography, Button } from "destamatic-ui";
 
 import { Observer } from "destam-dom";
-import Player from "../components/player";
+import Player from "../components/Player";
 
 
 const Home = ({ Shared }) => {
