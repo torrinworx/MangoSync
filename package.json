@@ -16,6 +16,7 @@
     "destam": "^0.3.0",
     "destam-dom": "^0.8.2",
     "destamatic-ui": "file:./destamatic-ui",
+    "dotenv-webpack": "^8.1.0",
     "webpack-dev-server": "^5.0.4"
   }
 }

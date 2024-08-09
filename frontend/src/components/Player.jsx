@@ -1,7 +1,8 @@
-import { h, Observer } from 'destam-dom';
+import { h, Observer, OArray } from 'destam-dom';
 import { Button, Icon, Slider, Typography } from 'destamatic-ui';
 
 import fileStream from './fileStream';
+import LyricsDisplay from './LyricsDisplay';
 
 // Format time in "MM:SS"
 const formatTime = (milliseconds) => {
@@ -11,9 +12,23 @@ const formatTime = (milliseconds) => {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 };
 
-const getSong = (song) => {
-    
-}
+const convertELRCToJSON = (elrc) => {
+    // Convert time format "mm:ss.SS" to milliseconds
+    const timeToMs = (time) => {
+        const [minutes, seconds] = time.split(':');
+        const [secs, ms] = seconds.split('.');
+        return (parseInt(minutes) * 60 * 1000) + (parseInt(secs) * 1000) + (ms ? parseInt(ms) : 0);
+    };
+
+    return elrc.trim().split('\n').map(line => {
+        const matches = line.match(/\[(.*?)\]\s\[(.*?)\]\s(.*)/);
+        return matches ? { 
+            startTime: timeToMs(matches[1].trim()), 
+            endTime: timeToMs(matches[2].trim()), 
+            text: matches[3].trim() 
+        } : null;
+    }).filter(item => item);
+};
 
 const Player = ({ ...props }) => {
     const value = Observer.mutable(0);
@@ -21,8 +36,9 @@ const Player = ({ ...props }) => {
     const playerStatus = Observer.mutable(false);
     const drag = Observer.mutable(false);
     const audio = new Audio();
-    const path = Observer.mutable('/home/torrin/Repositories/Personal/MangoSync/music/American Idiot.flac');
-    const lyrics = Observer.mutable('/home/torrin/Repositories/Personal/MangoSync/music/American Idiot.enhanced.lrc');
+    const path = Observer.mutable('./music/American Idiot.flac');
+    const lyrics = Observer.mutable('./music/American Idiot.enhanced.lrc');
+    const lyricsJson = OArray([]);
     const volume = Observer.mutable(0.5);
 
     const handleFile = (song) => {
@@ -46,9 +62,8 @@ const Player = ({ ...props }) => {
             .then(lyricsBlob => {
                 const reader = new FileReader();
                 reader.onload = () => {
-                    const lyricsText = reader.result;
-                    console.log("Lyrics from server:", lyricsText);
-                    // You can now handle the lyrics text as needed
+                    const lyricsELRC = reader.result;
+                    lyricsJson.splice(0, lyricsJson.length, ...convertELRCToJSON(lyricsELRC));
                 };
                 reader.onerror = () => {
                     console.error("Failed to read lyrics file:", reader.error);
@@ -79,7 +94,30 @@ const Player = ({ ...props }) => {
 
     drag.watch(() => {
         audio.currentTime = value.get() / 1000;
+
+        if (!playerStatus.get()) {
+            audio.pause();
+        };
     });
+
+    const handleDragStart = () => {
+        drag.set(true);
+        audio.pause();
+    };
+
+    const handleDragEnd = () => {
+        drag.set(false);
+        if (playerStatus.get()) {
+            audio.play();
+        }
+    };
+
+    // Slider change handler with debounce
+    const handleSliderChange = () => {
+        if (!drag.get()) {
+            audio.currentTime = value.get() / 1000;
+        }
+    };
 
     volume.watch(d => {
         audio.volume = d.value;
@@ -113,28 +151,15 @@ const Player = ({ ...props }) => {
     handleFile(path.get());
 
     return <div $style={{ textAlign: 'center' }}>
+        <LyricsDisplay value={value} lyricsJson={lyricsJson} />
         {/* <TextArea OValue={path} placeholder={'music file path'} /> */}
         <div $style={{ width: '300px', margin: '0 auto' }}>
             <Slider
                 max={durationMs}
                 OValue={value}
-                onDragStart={() => {
-                    drag.set(true);
-
-                    if (playerStatus) {
-                        audio.pause();
-                    };
-                }}
-                onDragEnd={() => {
-                    drag.set(false);
-
-                    if (playerStatus) {
-                        audio.play();
-                    };
-                }}
-                onChange={(e) => {
-                    audio.currentTime = value.get() / 1000;
-                }}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                onChange={handleSliderChange}
             />
             <div $style={{ display: 'flex', justifyContent: 'space-between', marginTop: '5px' }}>
                 <Typography type='p2'>
@@ -171,11 +196,11 @@ const Player = ({ ...props }) => {
             <Button type='icon' Icon={<Icon style={{ fill: 'currentColor' }} libraryName='feather' iconName='fast-forward' size='30' />} />
         </div>
         <div $style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                width: '300px',
-                margin: '20px auto'
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            width: '300px',
+            margin: '20px auto'
         }}>
             <Icon style={{ fill: 'currentColor' }} libraryName='feather' iconName='volume' size='30' />
             <Slider OValue={volume} min={0} max={1} step={0.01} />

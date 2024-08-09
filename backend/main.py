@@ -1,5 +1,5 @@
 import os
-import time
+import asyncio
 import traceback
 import subprocess
 import logging.config
@@ -20,10 +20,15 @@ from ws import router
 async def lifespan(app: FastAPI):
     build_dir = Path("./build")
     logger = logging.getLogger("uvicorn")
-
+    start_time = asyncio.get_event_loop().time()
+    # Could use some better logic if the build dir is not found or if webpack isn't started:
     while not build_dir.exists():
+        if asyncio.get_event_loop().time() - start_time > 10:
+            logger.error("Timeout: Build directory not found after 10 seconds. Terminating process.")
+            raise RuntimeError("Build directory not found.")
+        
         logger.info("Build directory not found. Waiting...")
-        time.sleep(2)
+        await asyncio.sleep(2)
 
     app.mount("/", StaticFiles(directory="./build", html=True), name="static")
     logger.info("Static files mounted successfully.")
