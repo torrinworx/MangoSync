@@ -18,4 +18,4 @@ async def lyrics(file_path: str, ws: WebSocket):
     head, _ = os.path.split(file_path)
     file_name = os.path.basename(file_path)
     with open(os.path.join(head, f"{file_name}.lyrics.json"), "w") as f:
-        json.dump(lyrics.model_dump(mode="json"), f, indent=4)
+        json.dump(lyrics, f, indent=4)

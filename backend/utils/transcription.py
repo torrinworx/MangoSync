@@ -60,25 +60,21 @@ class TranscriptionHandler:
         result_dict = result.to_dict()
 
         segments = []
-        time_synced = []
         for s in result_dict["segments"]:
             segments.append(
                 {
                     "start": float(s["start"]) * 1000,
                     "end": float(s["end"]) * 1000,
                     "text": s["text"],
+                    "words": [{
+                        'word': i['word'],
+                        'start': float(i['start']) * 1000,
+                        'end': float(i['end']) * 1000
+                    } for i in s['words']],
                 }
-            )
-            time_synced.extend(
-                {
-                    "start": float(i["start"]) * 1000,
-                    "end": float(i["end"]) * 1000,
-                    "word": i["word"],
-                }
-                for i in s["words"]
             )
 
-        return Lyrics(time_synced=time_synced, segments=segments)
+        return segments
 
     def _align_and_transcribe(self, file_path, lyrics, base_file_name):
         print("Lyrics found. Starting alignment with audio...")

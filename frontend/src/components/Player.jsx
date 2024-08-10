@@ -1,4 +1,4 @@
-import { h, Observer, OArray } from 'destam-dom';
+import { h, Observer, OArray, OObject } from 'destam-dom';
 import { Button, Icon, Slider, Typography } from 'destamatic-ui';
 
 import fileStream from './fileStream';
@@ -12,32 +12,16 @@ const formatTime = (milliseconds) => {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 };
 
-const timeToMs = (time) => {
-    const [minutes, seconds] = time.split(':');
-    const [secs, ms] = seconds.split('.');
-    return (parseInt(minutes) * 60 * 1000) + (parseInt(secs) * 1000) + (ms ? parseInt(ms.padEnd(3, '0')) : 0);
-};
-
-const convertELRCToJSON = (elrc) => {
-    return elrc.trim().split('\n').map(line => {
-        const matches = line.match(/\[(\d{2}:\d{2}\.\d{2,3})\]\s\[(\d{2}:\d{2}\.\d{2,3})\]\s(.*)/);
-        return matches ? { 
-            startTime: timeToMs(matches[1].trim()), 
-            endTime: timeToMs(matches[2].trim()), 
-            text: matches[3].trim() 
-        } : null;
-    }).filter(item => item !== null);
-};
-
 const Player = ({ ...props }) => {
     const value = Observer.mutable(0);
     const durationMs = Observer.mutable(0);
     const playerStatus = Observer.mutable(false);
     const drag = Observer.mutable(false);
     const audio = new Audio();
-    const path = Observer.mutable('./music/The American Dream Is Killing Me.flac');
-    const lyrics = Observer.mutable('./music/The American Dream Is Killing Me.enhanced.lrc');
-    const lyricsJson = OArray([]);
+    const path = Observer.mutable('./music/American Idiot.flac');
+    const lyrics = Observer.mutable('./music/American Idiot.flac.lyrics.json');
+    const lyricsModel = Observer.mutable(false);
+
     const volume = Observer.mutable(0.5);
     let intervalId = null;
 
@@ -79,8 +63,7 @@ const Player = ({ ...props }) => {
             .then(lyricsBlob => {
                 const reader = new FileReader();
                 reader.onload = () => {
-                    const lyricsELRC = reader.result;
-                    lyricsJson.splice(0, lyricsJson.length, ...convertELRCToJSON(lyricsELRC));
+                    lyricsModel.set(JSON.parse(reader.result));
                 };
                 reader.onerror = () => {
                     console.error("Failed to read lyrics file:", reader.error);
@@ -162,7 +145,7 @@ const Player = ({ ...props }) => {
     handleFile(path.get());
 
     return <div $style={{ textAlign: 'center' }}>
-        <LyricsDisplay value={value} lyricsJson={lyricsJson} />
+        <LyricsDisplay value={value} lyricsModel={lyricsModel} />
         <div $style={{ width: '300px', margin: '0 auto' }}>
             <Slider
                 max={durationMs}
