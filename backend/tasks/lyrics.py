@@ -2,7 +2,7 @@
 # Assumes that the file being passed in has absolutely no lyrics
 # Assumes that this program producees the most accurate lyrics
 import json
-import os 
+import os
 
 from fastapi import WebSocket
 
@@ -17,5 +17,5 @@ async def lyrics(file_path: str, ws: WebSocket):
     # TODO: use mongo state streaming system instead.
     head, _ = os.path.split(file_path)
     file_name = os.path.basename(file_path)
-    with open(os.path.join(head, f'{file_name}.lyrics.json'), 'w') as f:
-        json.dump(lyrics.model_dump(mode='json'), f, indent=4)
+    with open(os.path.join(head, f"{file_name}.lyrics.json"), "w") as f:
+        json.dump(lyrics.model_dump(mode="json"), f, indent=4)

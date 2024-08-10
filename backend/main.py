@@ -24,9 +24,11 @@ async def lifespan(app: FastAPI):
     # Could use some better logic if the build dir is not found or if webpack isn't started:
     while not build_dir.exists():
         if asyncio.get_event_loop().time() - start_time > 10:
-            logger.error("Timeout: Build directory not found after 10 seconds. Terminating process.")
+            logger.error(
+                "Timeout: Build directory not found after 10 seconds. Terminating process."
+            )
             raise RuntimeError("Build directory not found.")
-        
+
         logger.info("Build directory not found. Waiting...")
         await asyncio.sleep(2)
 
