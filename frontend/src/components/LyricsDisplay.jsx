@@ -4,6 +4,7 @@ import { Typography } from "destamatic-ui";
 const LyricsDisplay = ({ value, lyricsModel }) => {
     const currentWord = Observer.mutable(false);
     const currentSentence = Observer.mutable(false);
+    const currentSentenceElement = Observer.mutable(false);
 
     // Function to find the index of the word within a segment and its corresponding index in the lyrics
     const findWordIndexInSegment = (words, currentTime) => {
@@ -43,15 +44,41 @@ const LyricsDisplay = ({ value, lyricsModel }) => {
         }
     });
 
-    currentWord.watch(delta => console.log(delta.value));
-    currentSentence.watch(delta => console.log(delta.value));
+    currentWord.watch(delta => {
+        const currentSegment = currentSentence.get();
+        if (!currentSegment) return;
+
+        const words = currentSegment.words.map(word => {
+            const isHighlighted = word.word.trim() === delta.value.word.trim();
+            return (
+                <span $style={{ color: isHighlighted ? 'red' : 'inherit', fontWeight: isHighlighted ? 'bold' : 'normal' }}>
+                    {word.word} 
+                </span>
+            );
+        });
+
+        currentSentenceElement.set(<div>{words}</div>);
+    });
+
+    currentSentence.watch(delta => {
+        const currentWordValue = currentWord.get();
+        if (!currentWordValue) return;
+
+        const words = delta.words.map(word => {
+            const isHighlighted = word.word.trim() === currentWordValue.word.trim();
+            return (
+                <span $style={{ color: isHighlighted ? 'red' : 'inherit', fontWeight: isHighlighted ? 'bold' : 'normal' }}>
+                    {word.word} 
+                </span>
+            );
+        });
+
+        currentSentenceElement.set(<div>{words}</div>);
+    });
 
     return <div $style={{ minHeight: '50px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-        <Typography type="h5" fontStyle="italic">
-            {currentWord.map(w => w ? w.word : ' ')}
-        </Typography>
         <Typography type="h4" fontStyle="bold">
-            {currentSentence.map(s => s ? s.text : ' ')}
+            {currentSentenceElement.map(e => e ? e : ' ')}
         </Typography>
     </div>;
 };
