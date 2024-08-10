@@ -12,22 +12,21 @@ const formatTime = (milliseconds) => {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 };
 
-const convertELRCToJSON = (elrc) => {
-    // Convert time format "mm:ss.SS" to milliseconds
-    const timeToMs = (time) => {
-        const [minutes, seconds] = time.split(':');
-        const [secs, ms] = seconds.split('.');
-        return (parseInt(minutes) * 60 * 1000) + (parseInt(secs) * 1000) + (ms ? parseInt(ms) : 0);
-    };
+const timeToMs = (time) => {
+    const [minutes, seconds] = time.split(':');
+    const [secs, ms] = seconds.split('.');
+    return (parseInt(minutes) * 60 * 1000) + (parseInt(secs) * 1000) + (ms ? parseInt(ms.padEnd(3, '0')) : 0);
+};
 
+const convertELRCToJSON = (elrc) => {
     return elrc.trim().split('\n').map(line => {
-        const matches = line.match(/\[(.*?)\]\s\[(.*?)\]\s(.*)/);
+        const matches = line.match(/\[(\d{2}:\d{2}\.\d{2,3})\]\s\[(\d{2}:\d{2}\.\d{2,3})\]\s(.*)/);
         return matches ? { 
             startTime: timeToMs(matches[1].trim()), 
             endTime: timeToMs(matches[2].trim()), 
             text: matches[3].trim() 
         } : null;
-    }).filter(item => item);
+    }).filter(item => item !== null);
 };
 
 const Player = ({ ...props }) => {
@@ -40,23 +39,41 @@ const Player = ({ ...props }) => {
     const lyrics = Observer.mutable('./music/American Idiot.enhanced.lrc');
     const lyricsJson = OArray([]);
     const volume = Observer.mutable(0.5);
+    let intervalId = null;
+
+    const updateTime = () => {
+        if (!drag.get()) {
+            value.set(audio.currentTime * 1000);
+        }
+    };
+
+    const startPlaying = () => {
+        intervalId = setInterval(updateTime, 1);
+        audio.play();
+    };
+
+    const stopPlaying = () => {
+        if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
+        }
+        audio.pause();
+    };
 
     const handleFile = (song) => {
-        fileStream(
-            song
-        ).then(audioBlob => {
-            const audioUrl = URL.createObjectURL(audioBlob);
-            audio.src = audioUrl;
+        fileStream(song)
+            .then(audioBlob => {
+                const audioUrl = URL.createObjectURL(audioBlob);
+                audio.src = audioUrl;
 
-            audio.addEventListener('loadedmetadata', () => {
-                durationMs.set(audio.duration * 1000); // Convert seconds to milliseconds
-                console.log(`Duration: ${audio.duration} seconds`);
+                audio.addEventListener('loadedmetadata', () => {
+                    durationMs.set(audio.duration * 1000);
+                });
+
+                audio.load();
+            }).catch(error => {
+                console.error("Failed to stream music via WebSocket:", error);
             });
-
-            audio.load();
-        }).catch(error => {
-            console.error("Failed to stream music via WebSocket:", error);
-        });
 
         fileStream(lyrics.get())
             .then(lyricsBlob => {
@@ -81,38 +98,32 @@ const Player = ({ ...props }) => {
 
     playerStatus.watch(d => {
         if (d.value) {
-            audio.play();
+            startPlaying();
         } else {
-            audio.pause();
-        };
-    });
-
-    // Listen for the timeupdate event to update the current time
-    audio.addEventListener('timeupdate', () => {
-        value.set(audio.currentTime * 1000);
+            stopPlaying();
+        }
     });
 
     drag.watch(() => {
         audio.currentTime = value.get() / 1000;
 
         if (!playerStatus.get()) {
-            audio.pause();
-        };
+            stopPlaying();
+        }
     });
 
     const handleDragStart = () => {
         drag.set(true);
-        audio.pause();
+        stopPlaying();
     };
 
     const handleDragEnd = () => {
         drag.set(false);
         if (playerStatus.get()) {
-            audio.play();
+            startPlaying();
         }
     };
 
-    // Slider change handler with debounce
     const handleSliderChange = () => {
         if (!drag.get()) {
             audio.currentTime = value.get() / 1000;
@@ -146,13 +157,12 @@ const Player = ({ ...props }) => {
             audio.currentTime = Math.min(audio.currentTime + (details.seekOffset || 10), audio.duration);
             value.set(audio.currentTime * 1000);
         });
-    };
+    }
 
     handleFile(path.get());
 
     return <div $style={{ textAlign: 'center' }}>
         <LyricsDisplay value={value} lyricsJson={lyricsJson} />
-        {/* <TextArea OValue={path} placeholder={'music file path'} /> */}
         <div $style={{ width: '300px', margin: '0 auto' }}>
             <Slider
                 max={durationMs}

@@ -19,10 +19,8 @@ const fileStream = (filePath) => {
                 fileBufferQueue.push(event.data);
             } else {
                 const message = JSON.parse(event.data);
-                console.log(message);
 
                 if (message.status === "completed") {
-                    console.log("Streaming completed.");
                     ws.close();
                 } else if (message.status === "error") {
                     console.error("Error:", message.message);
@@ -38,7 +36,6 @@ const fileStream = (filePath) => {
         };
 
         ws.onclose = () => {
-            console.log("WebSocket connection closed.");
             const fileBlob = combineFileChunks(fileBufferQueue);
             resolve(fileBlob);
         };

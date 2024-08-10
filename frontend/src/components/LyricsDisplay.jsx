@@ -2,31 +2,37 @@ import { h, Observer } from "destam-dom";
 import { Typography } from "destamatic-ui";
 
 const LyricsDisplay = ({ value, lyricsJson }) => {
-    const currentLyric = Observer.mutable(['']);
+    const currentLyric = Observer.mutable('');
+
+    const findLyricIndex = (lyrics, currentTime) => {
+        let low = 0, high = lyrics.length - 1;
+        while (low <= high) {
+            const mid = Math.floor((low + high) / 2);
+            if (lyrics[mid].startTime <= currentTime && lyrics[mid].endTime > currentTime) {
+                return mid;
+            } else if (lyrics[mid].startTime > currentTime) {
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        return -1;
+    };
 
     value.watch(delta => {
         const currentTime = delta.value;
+        const lyricIndex = findLyricIndex(lyricsJson, currentTime);
 
-        // Find the current lyric based on the currentTime
-        const foundLyric = lyricsJson.find(
-          lyric => currentTime >= lyric.startTime && currentTime < lyric.endTime
-        );
-
-        // Update the currentLyric with the found lyric's text or set it to an empty string if not found
-        if (foundLyric) {
-            currentLyric.set([foundLyric.text]);
-        } else {
-            // currentLyric.set(['']);
+        if (lyricIndex !== -1 && currentLyric.get() !== lyricsJson[lyricIndex].text) {
+            currentLyric.set(lyricsJson[lyricIndex].text);
         }
     });
 
-    return (
-        <div>
-            <Typography type="h6">
-                {currentLyric.map(l => l ? l : null)}
-            </Typography>
-        </div>
-    );
+    return <div $style={{ minHeight: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Typography type="h4" fontStyle="bold">
+            {currentLyric.map(l => l ? l : ' ')}
+        </Typography>
+    </div>;
 };
 
 export default LyricsDisplay;
