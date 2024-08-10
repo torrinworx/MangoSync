@@ -2,9 +2,9 @@ import { h, Observer } from "destam-dom";
 import { Typography } from "destamatic-ui";
 
 const LyricsDisplay = ({ value, lyricsModel }) => {
-    const currentWord = Observer.mutable(false);
-    const currentSentence = Observer.mutable(false);
-    const currentSentenceElement = Observer.mutable(false);
+    const currentWord = Observer.mutable(null);
+    const currentSentence = Observer.mutable(null);
+    const currentSentenceElement = Observer.mutable(null);
 
     // Function to find the index of the word within a segment and its corresponding index in the lyrics
     const findWordIndexInSegment = (words, currentTime) => {
@@ -35,21 +35,25 @@ const LyricsDisplay = ({ value, lyricsModel }) => {
         const { segmentIdx, wordIdx } = findLyricSegmentAndWord(lyrics, currentTime);
         const currentSegment = lyrics[segmentIdx];
 
-        if (segmentIdx !== -1 && currentSentence.get() !== currentSegment.text) {
+        if (segmentIdx !== -1 && currentSentence.get() !== currentSegment) {
             currentSentence.set(currentSegment);
         }
 
-        if (segmentIdx !== -1 && wordIdx !== -1 && currentWord.get() !== currentSegment.words[wordIdx].word) {
+        if (segmentIdx !== -1 && wordIdx !== -1 && currentWord.get() !== currentSegment.words[wordIdx]) {
             currentWord.set(currentSegment.words[wordIdx]);
         }
     });
 
-    currentWord.watch(delta => {
+    const highlightCurrentWord = () => {
         const currentSegment = currentSentence.get();
-        if (!currentSegment) return;
+        const currentWordValue = currentWord.get();
+        if (!currentSegment || !currentWordValue) {
+            currentSentenceElement.set(<div> </div>);
+            return;
+        }
 
         const words = currentSegment.words.map(word => {
-            const isHighlighted = word.word.trim() === delta.value.word.trim();
+            const isHighlighted = word.word === currentWordValue.word && word.start === currentWordValue.start && word.end === currentWordValue.end;
             return (
                 <span $style={{ color: isHighlighted ? 'red' : 'inherit', fontWeight: isHighlighted ? 'bold' : 'normal' }}>
                     {word.word} 
@@ -58,29 +62,18 @@ const LyricsDisplay = ({ value, lyricsModel }) => {
         });
 
         currentSentenceElement.set(<div>{words}</div>);
-    });
+    };
 
-    currentSentence.watch(delta => {
-        const currentWordValue = currentWord.get();
-        if (!currentWordValue) return;
+    currentWord.watch(highlightCurrentWord);
+    currentSentence.watch(highlightCurrentWord);
 
-        const words = delta.words.map(word => {
-            const isHighlighted = word.word.trim() === currentWordValue.word.trim();
-            return (
-                <span $style={{ color: isHighlighted ? 'red' : 'inherit', fontWeight: isHighlighted ? 'bold' : 'normal' }}>
-                    {word.word} 
-                </span>
-            );
-        });
-
-        currentSentenceElement.set(<div>{words}</div>);
-    });
-
-    return <div $style={{ minHeight: '50px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-        <Typography type="h4" fontStyle="bold">
-            {currentSentenceElement.map(e => e ? e : ' ')}
-        </Typography>
-    </div>;
+    return (
+        <div $style={{ minHeight: '50px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+            <Typography type="h4" fontStyle="bold">
+                {currentSentenceElement.map(e => e ? e : ' ')}
+            </Typography>
+        </div>
+    );
 };
 
 export default LyricsDisplay;

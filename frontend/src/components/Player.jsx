@@ -18,8 +18,8 @@ const Player = ({ ...props }) => {
     const playerStatus = Observer.mutable(false);
     const drag = Observer.mutable(false);
     const audio = new Audio();
-    const path = Observer.mutable('./music/American Idiot.flac');
-    const lyrics = Observer.mutable('./music/American Idiot.flac.lyrics.json');
+    const path = Observer.mutable('./music/The American Dream Is Killing Me.flac');
+    const lyrics = Observer.mutable('./music/The American Dream Is Killing Me.flac.lyrics.json');
     const lyricsModel = Observer.mutable(false);
 
     const volume = Observer.mutable(0.5);
