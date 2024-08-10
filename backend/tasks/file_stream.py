@@ -6,18 +6,18 @@ from tasks import task
 
 
 @task(name="file_stream")
-async def file_stream(filepath: str, ws: WebSocket, chunk_size: int = 4096):
+async def file_stream(file_path: str, ws: WebSocket, chunk_size: int = 4096):
     """
     Streams a file through the WebSocket in chunks.
 
     Args:
-        filepath (str): The path to the file.
+        file_path (str): The path to the file.
         ws (WebSocket): The WebSocket connection instance.
         chunk_size (int, optional): The size of each chunk to be read and sent. Default is 4096 bytes.
     """
 
     try:
-        async with aiofiles.open(filepath, "rb") as f:
+        async with aiofiles.open(file_path, "rb") as f:
             chunk = await f.read(chunk_size)
             while chunk:
                 # Sending the chunk through WebSocket
@@ -29,7 +29,7 @@ async def file_stream(filepath: str, ws: WebSocket, chunk_size: int = 4096):
         )
     except FileNotFoundError:
         await ws.send_text(
-            json.dumps({"status": "error", "message": f"File '{filepath}' not found."})
+            json.dumps({"status": "error", "message": f"File '{file_path}' not found."})
         )
     except Exception as ex:
         await ws.send_text(

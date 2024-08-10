@@ -236,3 +236,4 @@ cython_debug/
 frontend/src-tauri/gen/schemas
 
 /music
+/models

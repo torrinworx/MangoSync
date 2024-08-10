@@ -6,7 +6,7 @@ const fileStream = (filePath) => {
         ws.onopen = () => {
             const requestPayload = JSON.stringify({
                 title: "file_stream",
-                args: { filepath: filePath }
+                args: { file_path: filePath }
             });
             ws.send(requestPayload);
         };
