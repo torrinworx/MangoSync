@@ -33,14 +33,20 @@ const LyricsDisplay = ({ value, lyricsModel }) => {
         const currentTime = delta.value;
 
         const { segmentIdx, wordIdx } = findLyricSegmentAndWord(lyrics, currentTime);
-        const currentSegment = lyrics[segmentIdx];
 
-        if (segmentIdx !== -1 && currentSentence.get() !== currentSegment) {
-            currentSentence.set(currentSegment);
-        }
+        if (segmentIdx === -1) {
+            currentSentence.set(null);
+        } else {
+            const currentSegment = lyrics[segmentIdx];
+            if (currentSentence.get() !== currentSegment) {
+                currentSentence.set(currentSegment);
+            }
 
-        if (segmentIdx !== -1 && wordIdx !== -1 && currentWord.get() !== currentSegment.words[wordIdx]) {
-            currentWord.set(currentSegment.words[wordIdx]);
+            if (wordIdx === -1) {
+                currentWord.set(null);
+            } else if (currentWord.get() !== currentSegment.words[wordIdx]) {
+                currentWord.set(currentSegment.words[wordIdx]);
+            }
         }
     });
 
@@ -54,11 +60,9 @@ const LyricsDisplay = ({ value, lyricsModel }) => {
 
         const words = currentSegment.words.map(word => {
             const isHighlighted = word.word === currentWordValue.word && word.start === currentWordValue.start && word.end === currentWordValue.end;
-            return (
-                <span $style={{ color: isHighlighted ? 'red' : 'inherit', fontWeight: isHighlighted ? 'bold' : 'normal' }}>
-                    {word.word} 
-                </span>
-            );
+            return <span $style={{ color: isHighlighted ? 'red' : 'inherit'}}>
+                {word.word} 
+            </span>;
         });
 
         currentSentenceElement.set(<div>{words}</div>);
@@ -67,13 +71,11 @@ const LyricsDisplay = ({ value, lyricsModel }) => {
     currentWord.watch(highlightCurrentWord);
     currentSentence.watch(highlightCurrentWord);
 
-    return (
-        <div $style={{ minHeight: '50px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-            <Typography type="h4" fontStyle="bold">
-                {currentSentenceElement.map(e => e ? e : ' ')}
-            </Typography>
-        </div>
-    );
+    return <div $style={{ minHeight: '50px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+        <Typography type="h4" fontStyle="bold">
+            {currentSentenceElement.map(e => e ? e : ' ')}
+        </Typography>
+    </div>;
 };
 
 export default LyricsDisplay;
