@@ -3,6 +3,7 @@ import json
 import inspect
 import asyncio
 import pathlib
+import traceback
 import importlib.util
 from functools import wraps
 from fastapi import WebSocket
@@ -133,6 +134,7 @@ class Tasks:
 
             await ws.send_text(json.dumps(result))
         except Exception as ex:
+            print(traceback.format_exc())
             await ws.send_text(
                 json.dumps(
                     {

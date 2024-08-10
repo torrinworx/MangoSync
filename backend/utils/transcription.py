@@ -14,7 +14,6 @@ from utils.models import Lyrics
 
 random.seed(0) # Setting seed so model is deterministic for each run with repeatable results.
 
-
 class TranscriptionHandler:
     def __init__(self, model_name='base', download_root='./models'):
         # Check if CUDA is available, otherwise use CPU
@@ -49,23 +48,32 @@ class TranscriptionHandler:
         base_file_name = file_path.rsplit('.', 1)[0]  # Extract base file name
 
         if processed_lyrics:
-            result = self._align_and_transcribe(file_path, processed_lyrics)
+            result = self._align_and_transcribe(file_path, processed_lyrics, base_file_name)
         else:
             result = self._transcribe(file_path, base_file_name)
-        
-        self._extract(result, base_file_name)
 
-        print("Moving on to embedding the lyrics")
-        enhanced_lrc_path = f'{base_file_name}.enhanced.lrc'
-        if file_path.lower().endswith('.mp3'):
-            self._embed_lyrics(file_path, enhanced_lrc_path, processed_lyrics)
-        if file_path.lower().endswith('.flac'):
-            self._embed_lyrics(file_path, enhanced_lrc_path, processed_lyrics)
+        result_dict = result.to_dict()
 
-        else:
-            print("Embedding lyrics is only supported for MP3 files.")
+        segments = []
+        time_synced = []
+        for s in result_dict['segments']:
+            segments.append({
+                'start': float(s['start']) * 1000,
+                'end': float(s['end']) * 1000,
+                'text': s['text']
+            })
+            time_synced.extend({
+                'start': float(i['start']) * 1000,
+                'end': float(i['end']) * 1000,
+                'word': i['word'],
+            } for i in s['words'])
 
-    def _align_and_transcribe(self, file_path, lyrics):
+        return Lyrics(
+            time_synced=time_synced,
+            segments=segments
+        )
+
+    def _align_and_transcribe(self, file_path, lyrics, base_file_name):
         print("Lyrics found. Starting alignment with audio...")
         result = self.model.align(
             audio=file_path,
@@ -80,43 +88,30 @@ class TranscriptionHandler:
             suppress_word_ts=False,
         )
 
-        # print("Alignment completed. Saving result...")
-        
-        # result.save_as_json(os.path.join(os.path.dirname(file_path), 'audio.json'))
-        return result
+        print("Alignment completed. Saving result...")
 
-    def _transcribe(self, file_path):
+        result.save_as_json(os.path.join(os.path.dirname(file_path), 'audio.json'))
+
+        return result
+    
+    def _transcribe(self, file_path, base_file_name):
         print("Lyrics not found. Starting transcription without alignment...")
         result = self.model.transcribe(
             audio=file_path,
             word_timestamps=True,
         )
-        # print("Transcription completed. Saving result...")
+        print("Transcription completed. Saving result...")
 
+        # Manually specify the path if save_as_json doesn't return it
         result.save_as_json(os.path.join(os.path.dirname(file_path), 'audio.json'))
-        
+
         return result
 
-    def _extract(self, result, base_file_name):
-        time_synced = []
-        segments = []
+    def _extract_words(self, result):
+        words = []
         for segment in result.segments:
-            time_synced.extend(segment.words)
-            segments.append({
-                'start': segment.start,
-                'end': segment.end,
-                'text': segment.text,
-            })
-
-        lyrics = Lyrics(
-            time_synced=time_synced,
-            segments=segments
-        )
-        print(lyrics)
-        with open(os.path.join('music', f'{base_file_name}.json'), 'w') as f:
-            json.dump(lyrics.model_dump(mode='json'), f)
-
-        return lyrics
+            words.extend(segment.words)
+        return words
 
     def _create_lrc(self, words):
         lrc_content = ""

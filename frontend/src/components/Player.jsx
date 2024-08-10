@@ -35,8 +35,8 @@ const Player = ({ ...props }) => {
     const playerStatus = Observer.mutable(false);
     const drag = Observer.mutable(false);
     const audio = new Audio();
-    const path = Observer.mutable('./music/American Idiot.flac');
-    const lyrics = Observer.mutable('./music/American Idiot.enhanced.lrc');
+    const path = Observer.mutable('./music/The American Dream Is Killing Me.flac');
+    const lyrics = Observer.mutable('./music/The American Dream Is Killing Me.enhanced.lrc');
     const lyricsJson = OArray([]);
     const volume = Observer.mutable(0.5);
     let intervalId = null;
