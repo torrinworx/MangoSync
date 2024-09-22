@@ -4,14 +4,12 @@
 import json
 import os
 
-from fastapi import WebSocket
-
-from tasks import task
+from jobrouter import job
 from global_vars import transcription_handler
 
 
-@task(name="lyrics")
-async def lyrics(file_path: str, ws: WebSocket):
+@job(name="lyrics")
+async def lyrics(file_path: str):
     lyrics = transcription_handler(file_path=file_path)
 
     # TODO: use mongo state streaming system instead.

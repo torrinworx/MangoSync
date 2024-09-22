@@ -9,7 +9,6 @@ verify_ssl = true
 name = "downloadpytorch"
 
 [packages]
-uvicorn = "*"
 fastapi = "*"
 python-dotenv = "*"
 aiofiles = "*"
@@ -22,6 +21,8 @@ torchaudio = {version = "*", index = "downloadpytorch"}
 pillow = "*"
 demucs = "*"
 stable-ts = "*"
+jobrouter = {path = "./backend/jobrouter"}
+uvicorn = {extras = ["standard"], version = "*"}
 
 [dev-packages]
 black = "*"

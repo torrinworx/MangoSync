@@ -1,11 +1,11 @@
 import json
 import aiofiles
 
+from jobrouter import job
 from fastapi import WebSocket
-from tasks import task
 
 
-@task(name="file_stream")
+@job(name="file_stream")
 async def file_stream(file_path: str, ws: WebSocket, chunk_size: int = 4096):
     """
     Streams a file through the WebSocket in chunks.
@@ -15,7 +15,6 @@ async def file_stream(file_path: str, ws: WebSocket, chunk_size: int = 4096):
         ws (WebSocket): The WebSocket connection instance.
         chunk_size (int, optional): The size of each chunk to be read and sent. Default is 4096 bytes.
     """
-
     try:
         async with aiofiles.open(file_path, "rb") as f:
             chunk = await f.read(chunk_size)

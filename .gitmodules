@@ -1,3 +1,6 @@
 [submodule "destamatic-ui"]
 	path = destamatic-ui
 	url = https://github.com/torrinworx/destamatic-ui
+[submodule "backend/jobrouter"]
+	path = backend/jobrouter
+	url = https://github.com/torrinworx/jobrouter

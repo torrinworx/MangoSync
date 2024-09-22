@@ -31,7 +31,7 @@ const Home = ({ Shared }) => {
 
                 ws.onopen = () => {
                     const requestPayload = JSON.stringify({
-                        title: "lyrics",
+                        name: "lyrics",
                         args: { file_path: './music/The American Dream Is Killing Me.flac' }
                     });
                     ws.send(requestPayload);
